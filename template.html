@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>seething</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+		 body {
+				 margin: 0px;
+				 background-color: #000000;
+				 overflow: hidden;
+		 }
+     #info {
+         color: #FFF;
+         background-color: #333333;
+	       position: absolute;
+	       top: 10px;
+	       width: 100px;
+	       text-align: center;
+	       z-index: 100;
+	       display:block;
+     }
+		</style>
+	</head>
+	<body>
+
+    <div id="info">Description</div>
+
+		<script src="three.js"></script>
+		<script>
+
+		 var camera, scene, renderer;
+		 var mesh;
+     var textbox;
+     var viewObjects = [];
+
+     function funcDef(name, size) {
+         this.name = name;
+         this.size = size;
+     }
+
+     var geometry = new THREE.BoxBufferGeometry( 40, 40, 40 );
+		 var material = new THREE.MeshBasicMaterial( { } );
+
+     var funcs = [];
+
+     //FUNCDEFS
+
+     init();
+		 animate();
+
+     function makeItems( items ) {
+         lastPos = 0;
+         items.forEach( function callback( funcDef, index, array) {
+             var cubegeom = new THREE.BoxBufferGeometry( 40, funcDef.size*10, 40 );
+             funccube = new THREE.Mesh( cubegeom, material );
+             funccube.position.set(0, lastPos, 0);
+             lastPos += funcDef.size*10 + 10;
+				     scene.add( funccube );
+             console.log(funcDef.size*10);
+         });
+     }
+
+		 function init() {
+
+				 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				 camera.position.z = 400;
+
+				 scene = new THREE.Scene();
+
+				 mesh = new THREE.Mesh( geometry, material );
+				 //scene.add( mesh );
+
+				 renderer = new THREE.WebGLRenderer();
+				 renderer.setPixelRatio( window.devicePixelRatio );
+				 renderer.setSize( window.innerWidth, window.innerHeight );
+				 document.body.appendChild( renderer.domElement );
+
+				 window.addEventListener( 'resize', onWindowResize, false );
+				 window.addEventListener( 'mousemove', onMouseMove, false );
+
+         textbox = document.getElementById('info');
+
+         makeItems( funcs );
+		 }
+
+		 function onWindowResize() {
+
+				 camera.aspect = window.innerWidth / window.innerHeight;
+				 camera.updateProjectionMatrix();
+
+				 renderer.setSize( window.innerWidth, window.innerHeight );
+
+		 }
+
+     function onMouseMove(event) {
+         textbox.style.top = event.clientY + 'px';
+         textbox.style.left = event.clientX + 'px';
+     }
+
+		 function animate() {
+
+				 requestAnimationFrame( animate );
+
+				 //mesh.rotation.x += 0.005;
+				 //mesh.rotation.y += 0.01;
+
+				 renderer.render( scene, camera );
+
+		 }
+
+		</script>
+
+	</body>
+</html>
