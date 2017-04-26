@@ -37,6 +37,7 @@
      function funcDef(name, size) {
          this.name = name;
          this.size = size;
+         this.calls = []
      }
 
      var geometry = new THREE.BoxBufferGeometry( 40, 40, 40 );
@@ -55,9 +56,15 @@
              var cubegeom = new THREE.BoxBufferGeometry( 40, funcDef.size*10, 40 );
              funccube = new THREE.Mesh( cubegeom, material );
              funccube.position.set(0, lastPos, 0);
-             lastPos += funcDef.size*10 + 10;
+             lastPos += funcDef.size*10 + 20;
+             funcDef.calls.forEach( function callback(funcCall, index, array) {
+                 var callgeom = new THREE.BoxBufferGeometry( 20, 5, 20 );
+                 callcube = new THREE.Mesh( callgeom, material );
+                 callcube.position.set(40, lastPos, 0);
+                 lastPos += 10;
+                 scene.add( callcube );
+             } );
 				     scene.add( funccube );
-             console.log(funcDef.size*10);
          });
      }
 
