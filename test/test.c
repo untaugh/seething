@@ -1,4 +1,4 @@
-void func1()
+void func1(int x)
 {
   int i = 1;
   float x = 0.1;
@@ -14,5 +14,6 @@ int func2(float f)
 
 int main()
 {
-  func2();
+  func2(a,asdf);
+  func1( 3 , 2 );
 }

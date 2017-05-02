@@ -6,4 +6,5 @@ sys.path.extend(['../seething'])
 
 import parse
 
-print(parse.getJsFuncDefs('test.c'))
+parse.parseJson('test.c', 'seething.json')
+
