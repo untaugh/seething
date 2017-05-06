@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!-- Map of functions, linking calls to defintion. -->
+<meta charset="utf-8">
+<style>
+ .FuncDef {
+     fill: gray;
+     stroke: black;
+ }
+
+ .FuncCall {
+     fill: white;
+     stroke: black;
+ }
+
+ .link {
+     fill: none;
+     stroke: #777;
+     stroke-opacity: 0.7;
+     stroke-width: 2px;
+ }
+
+</style>
+
+
+<svg class="squares"></svg>
+
+<script type="text/javascript" src="data.json"></script>
+<script src="d3.js"></script>
+
+<script>
+
+ var treedata = JSON.parse(castdata);
+
+ var squarechart = d3.select(".squares").attr("width", 500).attr("height", 500);
+
+ g = squarechart.append("g").attr("transform", "translate(20,20)")
+
+ var dataroot = d3.hierarchy(treedata); 
+
+ var square = g.selectAll(".square").data(fcalls(dataroot).descendants()).enter()
+               .filter( function(d) { return d.data.type == 'FuncDef' || d.data.type == 'FuncCall';})
+               .append("g").attr("class", function(d) { return d.data.type} )
+               .attr("transform", function(d) {return "translate(" + d.x +"," + d.y + ")";});
+
+ square.filter( function(d) { return d.data.type == 'FuncDef';}).append("rect").attr("width", "10").attr("height", function(d){return d.h}).attr("x","-5").attr("y","-5");
+
+ square.filter( function(d) { return d.data.type == 'FuncCall';}).append("circle").attr("r", "3");
+
+ square.filter(function(d) { return d.data.type == 'FuncCall';}).append("path")
+       .attr("class","link").attr("d", function(d) {
+           var fx = 0, fy = 0;
+           fcallname = '';
+           d.children.forEach( function(did) {
+               if (did.data.type == 'ID')
+                   {
+                       fcallname = did.data.name;
+                   }
+           });
+           fcalls(dataroot).each( function(def) {
+               if (def.data.type == 'FuncDef' && def.data.name == fcallname)
+                   {
+                       fx = def.x;
+                       fy = def.y;
+                   }
+           });
+
+           return "M" + (0) + "," + (0)
+                 + "  Q" + Math.abs((fy - d.y)) + ","
+                + (fy - d.y)/2 + " " + (fx - d.x + 5) + ","
+                + (fy - d.y) ;});
+
+ function fcalls(data)
+ {
+     var yoffset = 0;
+     data.each(function(ddef) {
+         if (ddef.data.type == 'FuncDef')
+             {
+                 var callcount = 0;
+                 ddef.x = 0;
+                 ddef.y = yoffset;
+                 yoffset += 15;
+                 ddef.eachAfter( function (dcall) {
+                     if (dcall.data.type == 'FuncCall')
+                         {
+                             dcall.x = 0;
+                             dcall.y = yoffset;
+                             yoffset += 15;
+                             callcount += 1;
+                         }
+                 });
+                 ddef.h = callcount * 15 + 10;
+             }
+     });
+
+     return data;
+ }
+
+</script>
