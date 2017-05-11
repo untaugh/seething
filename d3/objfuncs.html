@@ -2,7 +2,7 @@
 <!-- Map of functions, linking calls to defintion. -->
 <meta charset="utf-8">
 <style>
- .FuncDef {
+ .FuncDef rect {
      fill: red;
  }
 
@@ -13,9 +13,12 @@
 
  .link {
      fill: none;
-     stroke: #777;
-     stroke-opacity: 0.7;
-     stroke-width: 1px;
+     stroke: #999;
+     stroke-opacity: 1.0;
+     stroke-width: 2px;
+ }
+  text {
+     font: 12px sans-serif;
  }
 
 </style>
@@ -23,19 +26,17 @@
 
 <svg class="squares"></svg>
 
-<script type="text/javascript" src="objfunc.json"></script>
+<script type="text/javascript" src="../test/out.json"></script>
 <script src="d3.js"></script>
 
 <script>
 
- var nodeheight = 1;
+ var nodeheight = 20;
  var nodewidth = 10;
  var nodespace = 2;
 
  var maxheight = 100;
  var maxwidth = 100;
-
- 
 
  var treedata = JSON.parse(data);
 
@@ -45,16 +46,21 @@
 
  var dataroot = d3.hierarchy(treedata);
 
- var fcalldata = fcalls(dataroot);
+ var fcalldata = nfcalls(dataroot);
+
+ fcalldata = fcalldata.sort( function(a,b) { return b.cc - a.cc } );
+
+ fcalldata = fcalls(dataroot);
 
  var square = g.selectAll(".square").data(fcalldata.descendants()).enter()
                .filter( function(d) { return d.data.type == 'FuncDef' || d.data.type == 'FuncCall';})
                .append("g").attr("class", function(d) { return d.data.type} )
                .attr("transform", function(d) {return "translate(" + d.x +"," + d.y + ")";});
 
- square.filter( function(d) { return d.data.type == 'FuncDef';}).append("rect").attr("width", "10").attr("height", function(d){return d.h}).attr("x","-5").attr("y",-nodeheight/2);
+ square.filter( function(d) { return d.data.type == 'FuncDef';})
+       .append("rect").attr("width", nodewidth).attr("height", function(d){ return d.h}).attr("x","-5").attr("y",-nodeheight/2);
 
- // square.filter( function(d) { return d.data.type == 'FuncCall';}).append("circle").attr("r", nodeheight/2);
+ square.filter( function(d) { return d.data.type == 'FuncCall';}).append("circle").attr("r", nodewidth/4);
 
  square.filter(function(d) { return d.data.type == 'FuncCall';}).append("path")
        .attr("class","link").attr("d", function(d) {
@@ -78,7 +84,31 @@
                 + (fy - d.y)/2 + " " + (fx - d.x + 5) + ","
                 + (fy - d.y) ;});
 
+ square.filter( function(d) { return d.data.type == 'FuncDef';})
+       .append("text")
+       .attr("dy", 5)
+       .attr("dx", 10)
+       .text(function(d) { return d.data.name; });
+
  squarechart.attr("width", maxwidth/2+100).attr("height", maxheight+100);
+
+ function nfcalls(data)
+ {
+     data.each(function(d) {
+         if (d.data.type == 'FuncDef')
+             {
+                 var callcount = 0;
+                 d.eachAfter( function (dcall) {
+                     if (dcall.data.type == 'FuncCall')
+                         {
+                             callcount += 1;
+                         }
+                 });
+                 d.cc = callcount;
+             }
+     });
+     return data;
+ }
 
  function fcalls(data)
  {
