@@ -90,5 +90,5 @@ ENV/
 
 # Three.js lib
 three.js
-seething.json
+*.json
 d3.js
