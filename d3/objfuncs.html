@@ -17,10 +17,9 @@
      stroke-opacity: 1.0;
      stroke-width: 2px;
  }
-  text {
+ text {
      font: 12px sans-serif;
  }
-
 </style>
 
 
@@ -31,9 +30,9 @@
 
 <script>
 
- var nodeheight = 20;
+ var nodeheight = 10;
  var nodewidth = 10;
- var nodespace = 2;
+ var nodespace = 10;
 
  var maxheight = 100;
  var maxwidth = 100;
@@ -88,6 +87,7 @@
        .append("text")
        .attr("dy", 5)
        .attr("dx", 10)
+       .attr("transform", "rotate(-90,0,10)")
        .text(function(d) { return d.data.name; });
 
  squarechart.attr("width", maxwidth/2+100).attr("height", maxheight+100);
