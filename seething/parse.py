@@ -69,8 +69,13 @@ def objToJson(objfile):
                 nownode = node
         if fcall.match(l):
             name = fcallname.search(l).group(0)
-            node = { 'type':'FuncCall', 'name' : name, 'children' : [] }
-            nownode['children'].append(node)
+            hascall = False
+            for call in nownode['children']:
+                 if call['name'] == name:
+                     hascall = True
+            if not hascall:
+                node = { 'type':'FuncCall', 'name' : name, 'children' : [] }
+                nownode['children'].append(node)
 
     json = JSONEncoder().encode(tree)
     return json
