@@ -3,14 +3,17 @@
 <meta charset="utf-8">
 <style>
  .FuncDef rect {
-     fill: red;
+     fill: #9AA;
  }
 
- .FuncCall {
+ .FuncCall circle{
      fill: white;
      stroke: black;
  }
-
+ .FuncCall text{
+     text-color: #999;
+     font: 10px sans-serif;
+ }
  .link {
      fill: none;
      stroke: #999;
@@ -25,13 +28,13 @@
 
 <svg class="squares"></svg>
 
-<script type="text/javascript" src="../test/out.json"></script>
+<script type="text/javascript" src="../test/outnano.json"></script>
 <script src="d3.js"></script>
 
 <script>
 
- var nodeheight = 10;
- var nodewidth = 10;
+ var nodeheight = 20;
+ var nodewidth = 200;
  var nodespace = 10;
 
  var maxheight = 100;
@@ -57,9 +60,10 @@
                .attr("transform", function(d) {return "translate(" + d.x +"," + d.y + ")";});
 
  square.filter( function(d) { return d.data.type == 'FuncDef';})
-       .append("rect").attr("width", nodewidth).attr("height", function(d){ return d.h}).attr("x","-5").attr("y",-nodeheight/2);
+       .append("rect").attr("width", nodewidth).attr("height", function(d){ return d.h}).attr("x","-0").attr("y",-nodeheight/2);
 
- square.filter( function(d) { return d.data.type == 'FuncCall';}).append("circle").attr("r", nodewidth/4);
+ square.filter( function(d) { return d.data.type == 'FuncCall';}).append("circle").attr("r", 4)
+       .attr("transform", function(d) {return "translate(" + nodewidth +"," + 0 + ")";});
 
  square.filter(function(d) { return d.data.type == 'FuncCall';}).append("path")
        .attr("class","link").attr("d", function(d) {
@@ -73,22 +77,26 @@
                    }
            });
 
-           width = Math.abs((fy - d.y)/2)
+           width = nodewidth + Math.abs((fy - d.y))
            if (width > maxwidth)
                {
-                   maxwidth = width;
+                   maxwidth = nodewidth + width;
                }
-           return "M" + (0) + "," + (0)
+           return "M" + (nodewidth) + "," + (0)
                 + "  Q" + width + ","
-                + (fy - d.y)/2 + " " + (fx - d.x + 5) + ","
+                + (fy - d.y)/2 + " " + (fx - d.x + nodewidth) + ","
                 + (fy - d.y) ;});
 
- square.filter( function(d) { return d.data.type == 'FuncDef';})
+ square.filter( function(d) { return d.data.type == 'FuncDef' || d.data.type == 'FuncCall';})
        .append("text")
        .attr("dy", 5)
        .attr("dx", 10)
-       .attr("transform", "rotate(-90,0,10)")
-       .text(function(d) { return d.data.name; });
+       .text(function(d) { return d.data.name; })
+       .filter( function(d) { return d.data.type == 'FuncCall';})
+       .attr("text-anchor", "end")
+       .attr("dx", -10)
+       .attr("x", nodewidth)
+ ;
 
  squarechart.attr("width", maxwidth/2+100).attr("height", maxheight+100);
 
