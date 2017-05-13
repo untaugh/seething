@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!-- Map of functions, linking calls to defintion. -->
+<meta charset="utf-8">
+<style>
+ .FuncDef rect {
+     fill: #9AA;
+ }
+
+ .FuncCall circle{
+     fill: white;
+     stroke: black;
+ }
+ .FuncCall text{
+     text-color: #999;
+     font: 10px sans-serif;
+ }
+ .link {
+     fill: none;
+     stroke: #999;
+     stroke-opacity: 1.0;
+     stroke-width: 2px;
+ }
+ text {
+     font: 12px sans-serif;
+ }
+</style>
+
+
+<svg class="squares"></svg>
+
+<script type="text/javascript" src="../test/outtest.json"></script>
+<script src="d3.js"></script>
+
+<script>
+
+ var nodeheight = 20;
+ var nodewidth = 200;
+ var nodespace = 10;
+
+ var maxheight = 100;
+ var maxwidth = 100;
+
+ var treedata = JSON.parse(data);
+
+ var squarechart = d3.select(".squares").attr("width", 500).attr("height", 500);
+
+ g = squarechart.append("g").attr("transform", "translate(20,20)");
+
+ console.log(treedata);
+
+ addcallers(treedata);
+
+ console.log(treedata);
+
+ var dataroot = d3.hierarchy(treedata);
+
+ var tree = d3.tree().size([500,400]);
+
+ var graph = g.selectAll(".square").data(tree(dataroot).descendants()).enter()
+              .append("g").attr("class", function(d) { return d.data.type} )
+              .attr("transform", function(d) {return "translate(" + d.y +"," + d.x + ")";});
+
+ graph.append("circle").attr("r", 2.5);
+
+ graph.append("text").text(function(d) { return d.data.name })
+
+ function addcallers(data)
+ {
+     data['children'].forEach(function(d){
+         d.callers = getcallers(d.name,data);
+     });
+ }
+
+ function getcallers(name, data)
+ {
+     var callers = []
+
+     data['children'].forEach(function(d){
+         if (d.type == 'FuncDef')
+             {
+                 d.children.forEach(function(d2){
+                     if (d2.type == 'FuncCall' && d2.name == name)
+                         {
+                             callers.push(d.name);
+                         }
+                 });
+             }
+     });
+     return callers;
+ }
+
+</script>
