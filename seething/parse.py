@@ -6,6 +6,9 @@ from pathlib import Path
 import inspect
 import subprocess
 import re
+import logging, sys
+
+#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 class visitorJson(c_ast.NodeVisitor):
 
@@ -43,39 +46,56 @@ class FuncDefVisitor(c_ast.NodeVisitor):
     def visit_FuncCall(self, node):
         self.jsCode += ('funcs[funcs.length - 1].calls.push(\'%s\');\n' % (node.name.name))
 
-def objToJson(objfile):
-
+def objToJson(objfile, skipdashed=True):
+    
     file = Path(objfile)
 
     if not file.exists():
-        print('Cannot find %s.' % (file))
+        logginf.debug('File %s not found.' % (file))
         return ''
 
-    result = subprocess.run(['objdump','-d',file.as_posix()], stdout=subprocess.PIPE)
+    result = subprocess.run(['objdump','-dC',file.as_posix()], stdout=subprocess.PIPE)
 
-    fdef = re.compile('[0-9a-f]+ <[\w]+>:')
-    fdefname= re.compile('(?<=<)[\w]+(?=>:)')
-    fcall = re.compile('\s+[0-9a-z]+:\s+([0-9a-f]{2}\s+){5}callq\s+[0-9a-z]+\s+<\w+>')
-    fcallname= re.compile('(?<=<)[\w]+')
+    fchars = '[\w_*:()@~]'
+    fdef = re.compile('[0-9a-f]+ <' + fchars + '+>:')
+    fdefname= re.compile('(?<=<)' + fchars + '+(?=>:)')
+    fcall = re.compile('\s+[0-9a-z]+:\s+([0-9a-f]{2}\s+){5}callq\s+[0-9a-z]+\s+<' + fchars + '+>')
+    fcallname= re.compile('(?<=<)' + fchars + '+')
 
     tree = { 'children' : [] }
 
+    nownode = {'name': '@root'}
+    
     for l in result.stdout.decode().splitlines():
+        #logging.debug(l)
+                        
         if fdef.match(l):
             name = fdefname.search(l).group(0)
-            if not name.startswith('_'):
+            logging.debug('Match function definition %s. ' % (name))
+            if not name.startswith('_') or not skipdashed:
+                logging.debug('Add function defintion %s.' % (name))
                 node = { 'type':'FuncDef', 'name' : name, 'children' : [] }
                 tree['children'].append(node)
                 nownode = node
+            else:
+                nownode = {'name': '@undefined'}
+                logging.debug('Function %s starts with \'_\'.' % (name))
+
         if fcall.match(l):
             name = fcallname.search(l).group(0)
+            logging.debug('Match function call %s.' % (name))
             hascall = False
-            for call in nownode['children']:
-                 if call['name'] == name:
-                     hascall = True
-            if not hascall:
-                node = { 'type':'FuncCall', 'name' : name, 'children' : [] }
-                nownode['children'].append(node)
+            if isinstance(nownode.get('children'), list):
+                for call in nownode.get('children'):
+                    if call['name'] == name:
+                        logging.debug('Function call %s already exists.' % (name))
+                        hascall = True
+                if not hascall:
+                    logging.debug('Add function call %s from %s.' % (name, nownode.get('name')))
+                    node = { 'type':'FuncCall', 'name' : name, 'children' : [] }
+                    nownode['children'].append(node)
+            else:
+                logging.debug('Node %s is not type list.' % (nownode.get('name')))
 
     json = JSONEncoder().encode(tree)
     return json
