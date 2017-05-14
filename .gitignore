@@ -88,7 +88,10 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# Three.js lib
-three.js
+# json files
 *.json
+
+# three and d3 libs
+three.js
 d3.js
+d3.min.js
