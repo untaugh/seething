@@ -28,63 +28,104 @@
 
 <svg class="squares"></svg>
 
-<script type="text/javascript" src="../test/outtest.json"></script>
+<script type="text/javascript" src="../test/test.json"></script>
 <script src="d3.js"></script>
 
 <script>
 
- var nodeheight = 20;
- var nodewidth = 200;
- var nodespace = 10;
-
- var maxheight = 100;
- var maxwidth = 100;
-
+ var height = 200;
+ var width = 400;
  var treedata = JSON.parse(data);
 
- var squarechart = d3.select(".squares").attr("width", 500).attr("height", 500);
+ var squarechart = d3.select(".squares").attr("width", width+100).attr("height", height);
 
  g = squarechart.append("g").attr("transform", "translate(20,20)");
 
- console.log(treedata);
-
- addcallers(treedata);
-
- console.log(treedata);
-
- var dataroot = d3.hierarchy(treedata);
-
- var tree = d3.tree().size([500,400]);
+ var treeroot = addcallers(treedata, 'main');
+ 
+ var dataroot = d3.hierarchy(treeroot);
+ 
+ var tree = d3.tree().size([height,width]);
 
  var graph = g.selectAll(".square").data(tree(dataroot).descendants()).enter()
-              .append("g").attr("class", function(d) { return d.data.type} )
+	      .append("g").attr("class", function(d) { return d.data.type} )
               .attr("transform", function(d) {return "translate(" + d.y +"," + d.x + ")";});
 
+ var link = g.selectAll(".link").data(tree(dataroot).descendants().slice(1)).enter()
+	     .append("path")
+             .attr("class", "link")
+             .attr("d", function(d) {
+                 return "M" + d.y + "," + d.x
+                      + "C" + (d.y + d.parent.y) / 2 + "," + d.x
+                      + " " + (d.y + d.parent.y) / 2 + "," + d.parent.x
+                      + " " + d.parent.y + "," + d.parent.x;
+	     });
+ 
  graph.append("circle").attr("r", 2.5);
 
  graph.append("text").text(function(d) { return d.data.name })
 
- function addcallers(data)
+ 
+ function addcallers(data, rootfunc)
  {
-     data['children'].forEach(function(d){
-         d.callers = getcallers(d.name,data);
-     });
- }
+     var defs = {};
 
+     data['children'].forEach(function(d){
+	 defs[d.name] = d;
+     });    
+     
+     addfuncs(0, defs[rootfunc], defs);
+
+     return defs[rootfunc];
+ }
+ 
+ function addfuncs(n, obj, defs) 
+ {
+     var callnames = [];
+
+     obj['children'].forEach( function(item, index, object) {
+	 callnames.push(item.name);
+     });
+
+     obj['children'] = [];
+     
+     callnames.forEach( function(item, index, object) {
+	 	 
+	 if (n < 10)
+	 {
+	     addfuncs(n+1,defs[item], defs);
+	 }
+	 
+	 obj['children'].push(defs[item]);	    	 
+     });
+
+     // remove function calls
+     /* index = a.length - 1;
+      * while (index >= 0)
+      * {
+	if (a[index].type == 'FuncCall')
+	{
+	a.splice(index,1);
+	}
+	index-=1;
+      * }*/
+     
+ }
+ 
  function getcallers(name, data)
  {
      var callers = []
 
      data['children'].forEach(function(d){
          if (d.type == 'FuncDef')
-             {
-                 d.children.forEach(function(d2){
-                     if (d2.type == 'FuncCall' && d2.name == name)
-                         {
-                             callers.push(d.name);
-                         }
-                 });
-             }
+         {
+             d.children.forEach(function(d2){
+                 if (d2.type == 'FuncCall' && d2.name == name)
+                 {
+                     callers.push(d.name);
+                 }
+             });
+         }
      });
      return callers;
  }
