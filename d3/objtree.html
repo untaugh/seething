@@ -26,28 +26,37 @@
 </style>
 
 
-<svg class="squares"></svg>
+<svg class="functiongraph"></svg>
+
+<ul class="functionchart"></ul>
 
 <script type="text/javascript" src="../test/test.json"></script>
 <script src="d3.js"></script>
 
 <script>
+ 
+ var height = 12000;
 
- var height = 200;
- var width = 400;
+ var width = 2000;
+ 
  var treedata = JSON.parse(data);
 
- var squarechart = d3.select(".squares").attr("width", width+100).attr("height", height);
+ var functionchart = d3.select(".functionchart");
 
- g = squarechart.append("g").attr("transform", "translate(20,20)");
+ var functiongraph = d3.select(".functiongraph").attr("width", width+400).attr("height", height);;
 
- var treeroot = addcallers(treedata, 'main');
+ g = functiongraph.append("g").attr("transform", "translate(20,20)");
  
+ var treeroot = addcallers(treedata, 'main');
+
  var dataroot = d3.hierarchy(treeroot);
+
+// functionchart.selectAll(".funcdef").data(dataroot.descendants()).enter()
+// .append("li").text( function(d) { return d.data.name } );
  
  var tree = d3.tree().size([height,width]);
 
- var graph = g.selectAll(".square").data(tree(dataroot).descendants()).enter()
+ var graph = g.selectAll(".functiongraph").data(tree(dataroot).descendants()).enter()
 	      .append("g").attr("class", function(d) { return d.data.type} )
               .attr("transform", function(d) {return "translate(" + d.y +"," + d.x + ")";});
 
@@ -64,7 +73,6 @@
  graph.append("circle").attr("r", 2.5);
 
  graph.append("text").text(function(d) { return d.data.name })
-
  
  function addcallers(data, rootfunc)
  {
@@ -72,62 +80,93 @@
 
      data['children'].forEach(function(d){
 	 defs[d.name] = d;
-     });    
-     
+ });
+ 
      addfuncs(0, defs[rootfunc], defs);
 
      return defs[rootfunc];
  }
+
+ function isrecursive(func, parent)
+ {
+     //console.log(func.name + ', ' + parent.name);
+     //console.log(parent);
+     if (func.name == parent.name)
+     {
+	 return true;
+     }
+     else if (parent['parent'])
+     {
+	 isrecursive(func, parent['parent']);
+     }
+     else
+     {
+	 return false;
+     }
+ }
  
  function addfuncs(n, obj, defs) 
  {
+     if (n>2)
+     {
+	 return;
+     }
+	 
      var callnames = [];
 
      obj['children'].forEach( function(item, index, object) {
-	 callnames.push(item.name);
-     });
-
-     obj['children'] = [];
-     
-     callnames.forEach( function(item, index, object) {
-	 	 
-	 if (n < 10)
+	 if (item)
 	 {
-	     addfuncs(n+1,defs[item], defs);
+	     if (item.name != obj.name)
+	     {
+		 callnames.push(item.name);
+	     }
+	     else
+	     {
+		 console.log('Function ' + item.name + ' calling itself. Not added.');
+	     }
 	 }
-	 
-	 obj['children'].push(defs[item]);	    	 
      });
 
-     // remove function calls
-     /* index = a.length - 1;
-      * while (index >= 0)
-      * {
-	if (a[index].type == 'FuncCall')
-	{
-	a.splice(index,1);
-	}
-	index-=1;
-      * }*/
-     
+     // clear all function call objects
+     obj['children'] = [];
+
+     // add function definitions instead
+     callnames.forEach( function(item, index, object) {
+	 
+	 var funcdef = defs[item];
+
+	 // function definiton found
+	 if (funcdef)
+	 {
+	     // check for recursion
+	     //funcdef['parent'] = obj;
+	     //console.log('checking recursion for ' + funcdef.name)
+	     //console.log(funcdef);	     
+	     var b = isrecursive(funcdef, obj);
+
+	     //if (b)
+	     //{
+	     //console.log('Function ' + funcdef.name + ' is recursive.')
+	     //}
+	     
+	     if (!funcdef.added)
+	     {
+		 funcdef['parent'] = obj;
+		 addfuncs(n+1,funcdef, defs);
+		 obj['children'].push(funcdef);
+		 funcdef.added = true;
+	     }
+	     else
+	     {
+		 //console.log('Function ' + item + ' already added to tree.')
+	     }
+	 }
+	 else
+	 {
+	     console.log('Function ' + item + ' not found.');
+	 }
+     });
  }
  
- function getcallers(name, data)
- {
-     var callers = []
-
-     data['children'].forEach(function(d){
-         if (d.type == 'FuncDef')
-         {
-             d.children.forEach(function(d2){
-                 if (d2.type == 'FuncCall' && d2.name == name)
-                 {
-                     callers.push(d.name);
-                 }
-             });
-         }
-     });
-     return callers;
- }
-
 </script>
