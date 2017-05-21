@@ -50,7 +50,7 @@
  var treeroot = addcallers(treedata, 'main');
 
  var dataroot = d3.hierarchy(treeroot);
-
+ 
 // functionchart.selectAll(".funcdef").data(dataroot.descendants()).enter()
 // .append("li").text( function(d) { return d.data.name } );
  
@@ -89,8 +89,6 @@
 
  function isrecursive(func, parent)
  {
-     //console.log(func.name + ', ' + parent.name);
-     //console.log(parent);
      if (func.name == parent.name)
      {
 	 return true;
@@ -107,24 +105,12 @@
  
  function addfuncs(n, obj, defs) 
  {
-     if (n>2)
-     {
-	 return;
-     }
-	 
      var callnames = [];
 
      obj['children'].forEach( function(item, index, object) {
-	 if (item)
+	 if (item.type == 'FuncCall')
 	 {
-	     if (item.name != obj.name)
-	     {
-		 callnames.push(item.name);
-	     }
-	     else
-	     {
-		 console.log('Function ' + item.name + ' calling itself. Not added.');
-	     }
+	     callnames.push(item.name);
 	 }
      });
 
@@ -140,26 +126,27 @@
 	 if (funcdef)
 	 {
 	     // check for recursion
-	     //funcdef['parent'] = obj;
-	     //console.log('checking recursion for ' + funcdef.name)
-	     //console.log(funcdef);	     
-	     var b = isrecursive(funcdef, obj);
+	     var recursive = isrecursive(funcdef, obj);
 
-	     //if (b)
-	     //{
-	     //console.log('Function ' + funcdef.name + ' is recursive.')
-	     //}
-	     
-	     if (!funcdef.added)
+	     if (recursive)
 	     {
+		 console.log('Function ' + funcdef.name + ' is recursive.')
+	     }
+	     
+	     if (!funcdef['parent'])
+	     {
+		 //console.log(obj);
 		 funcdef['parent'] = obj;
 		 addfuncs(n+1,funcdef, defs);
 		 obj['children'].push(funcdef);
-		 funcdef.added = true;
 	     }
 	     else
 	     {
-		 //console.log('Function ' + item + ' already added to tree.')
+		 // copy function definiton
+		 funcdef = {'name': item, 'parent': obj, 'children': funcdef['children'], 'type': 'FuncDef'};
+		 addfuncs(n+1,funcdef, defs);
+		 obj['children'].push(funcdef);	 
+		 console.log('Copying function ' + item + ', as parent ' + funcdef['parent'].name + ' exists.');
 	     }
 	 }
 	 else
